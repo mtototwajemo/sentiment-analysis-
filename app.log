@@ -1,0 +1,92 @@
+2025-04-05 22:12:26,282 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-04-05 22:12:26,282 - INFO - [33mPress CTRL+C to quit[0m
+2025-04-05 22:12:26,288 - INFO -  * Restarting with stat
+2025-04-05 22:12:38,948 - WARNING -  * Debugger is active!
+2025-04-05 22:12:38,969 - INFO -  * Debugger PIN: 744-314-316
+2025-04-05 22:22:50,941 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-04-05 22:22:50,941 - INFO - [33mPress CTRL+C to quit[0m
+2025-04-05 22:22:50,992 - INFO -  * Restarting with watchdog (windowsapi)
+2025-04-05 22:23:01,051 - WARNING -  * Debugger is active!
+2025-04-05 22:23:01,066 - INFO -  * Debugger PIN: 105-406-013
+2025-04-05 22:28:17,579 - INFO -  * Detected change in 'C:\\Users\\mtoto\\AppData\\Local\\Programs\\Python\\Python310\\Lib\\site-packages\\flask\\app.py', reloading
+2025-04-05 22:28:17,626 - INFO -  * Detected change in 'C:\\Users\\mtoto\\AppData\\Local\\Programs\\Python\\Python310\\Lib\\site-packages\\flask\\templating.py', reloading
+2025-04-05 22:28:17,675 - INFO -  * Detected change in 'C:\\Users\\mtoto\\AppData\\Local\\Programs\\Python\\Python310\\Lib\\site-packages\\jinja2\\environment.py', reloading
+2025-04-05 22:28:17,718 - INFO -  * Detected change in 'C:\\Users\\mtoto\\AppData\\Local\\Programs\\Python\\Python310\\Lib\\site-packages\\jinja2\\loaders.py', reloading
+2025-04-05 22:28:17,855 - INFO - 127.0.0.1 - - [05/Apr/2025 22:28:17] "[35m[1mGET / HTTP/1.1[0m" 500 -
+2025-04-05 22:28:19,768 - INFO -  * Restarting with watchdog (windowsapi)
+2025-04-05 22:28:31,728 - WARNING -  * Debugger is active!
+2025-04-05 22:28:31,744 - INFO -  * Debugger PIN: 105-406-013
+2025-04-05 22:28:32,105 - INFO - 127.0.0.1 - - [05/Apr/2025 22:28:32] "GET /?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-04-05 22:28:32,349 - INFO - 127.0.0.1 - - [05/Apr/2025 22:28:32] "GET /?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-04-05 22:36:47,166 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-04-05 22:36:47,166 - INFO - [33mPress CTRL+C to quit[0m
+2025-04-05 22:36:47,172 - INFO -  * Restarting with stat
+2025-04-05 22:36:59,973 - WARNING -  * Debugger is active!
+2025-04-05 22:36:59,989 - INFO -  * Debugger PIN: 744-314-316
+2025-04-05 22:37:05,920 - INFO - 127.0.0.1 - - [05/Apr/2025 22:37:05] "GET / HTTP/1.1" 200 -
+2025-04-05 22:37:06,302 - INFO - 127.0.0.1 - - [05/Apr/2025 22:37:06] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-04-05 22:37:35,333 - INFO - 127.0.0.1 - - [05/Apr/2025 22:37:35] "POST /upload HTTP/1.1" 200 -
+2025-04-05 22:37:45,382 - INFO - 127.0.0.1 - - [05/Apr/2025 22:37:45] "[35m[1mPOST /train HTTP/1.1[0m" 500 -
+2025-04-05 22:37:46,002 - INFO - 127.0.0.1 - - [05/Apr/2025 22:37:46] "GET /train?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-04-05 22:37:46,035 - INFO - 127.0.0.1 - - [05/Apr/2025 22:37:46] "GET /train?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-04-05 22:37:46,258 - INFO - 127.0.0.1 - - [05/Apr/2025 22:37:46] "GET /train?__debugger__=yes&cmd=resource&f=console.png&s=7LhPs3H5XuueYKoeamwI HTTP/1.1" 200 -
+2025-04-05 22:37:46,336 - INFO - 127.0.0.1 - - [05/Apr/2025 22:37:46] "GET /train?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-04-05 22:38:04,432 - INFO - 127.0.0.1 - - [05/Apr/2025 22:38:04] "GET / HTTP/1.1" 200 -
+2025-04-05 22:38:27,978 - INFO - 127.0.0.1 - - [05/Apr/2025 22:38:27] "POST /upload HTTP/1.1" 200 -
+2025-04-05 22:38:33,242 - INFO - 127.0.0.1 - - [05/Apr/2025 22:38:33] "[35m[1mPOST /train HTTP/1.1[0m" 500 -
+2025-04-05 22:38:33,327 - INFO - 127.0.0.1 - - [05/Apr/2025 22:38:33] "[36mGET /train?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-04-05 22:38:33,388 - INFO - 127.0.0.1 - - [05/Apr/2025 22:38:33] "[36mGET /train?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-04-05 22:38:33,495 - INFO - 127.0.0.1 - - [05/Apr/2025 22:38:33] "[36mGET /train?__debugger__=yes&cmd=resource&f=console.png&s=7LhPs3H5XuueYKoeamwI HTTP/1.1[0m" 304 -
+2025-04-05 22:44:57,129 - INFO -  * Detected change in 'C:\\Users\\mtoto\\Downloads\\sentiment_analysis_app\\apps.py', reloading
+2025-04-05 22:45:01,003 - INFO -  * Restarting with stat
+2025-04-05 22:45:30,613 - WARNING -  * Debugger is active!
+2025-04-05 22:45:30,629 - INFO -  * Debugger PIN: 744-314-316
+2025-04-05 22:50:13,336 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-04-05 22:50:13,337 - INFO - [33mPress CTRL+C to quit[0m
+2025-04-05 22:50:13,374 - INFO -  * Restarting with watchdog (windowsapi)
+2025-04-05 22:50:30,829 - WARNING -  * Debugger is active!
+2025-04-05 22:50:30,873 - INFO -  * Debugger PIN: 105-406-013
+2025-04-05 22:51:19,924 - INFO - 127.0.0.1 - - [05/Apr/2025 22:51:19] "GET / HTTP/1.1" 200 -
+2025-04-05 22:51:24,883 - INFO - 127.0.0.1 - - [05/Apr/2025 22:51:24] "GET / HTTP/1.1" 200 -
+2025-04-05 22:51:37,658 - INFO - 127.0.0.1 - - [05/Apr/2025 22:51:37] "[31m[1mPOST /train HTTP/1.1[0m" 400 -
+2025-04-05 22:51:41,874 - INFO - 127.0.0.1 - - [05/Apr/2025 22:51:41] "GET / HTTP/1.1" 200 -
+2025-04-05 22:54:41,878 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-04-05 22:54:41,878 - INFO - [33mPress CTRL+C to quit[0m
+2025-04-05 22:54:42,000 - INFO -  * Restarting with watchdog (windowsapi)
+2025-04-05 22:54:56,476 - WARNING -  * Debugger is active!
+2025-04-05 22:54:56,507 - INFO -  * Debugger PIN: 105-406-013
+2025-04-05 22:55:18,144 - INFO - 127.0.0.1 - - [05/Apr/2025 22:55:18] "GET / HTTP/1.1" 200 -
+2025-04-05 22:55:32,265 - INFO - 127.0.0.1 - - [05/Apr/2025 22:55:32] "POST /upload HTTP/1.1" 200 -
+2025-04-05 22:55:59,563 - INFO - 127.0.0.1 - - [05/Apr/2025 22:55:59] "POST /train HTTP/1.1" 200 -
+2025-04-05 22:56:23,228 - INFO - 127.0.0.1 - - [05/Apr/2025 22:56:23] "POST /predict HTTP/1.1" 200 -
+2025-04-05 23:02:07,907 - INFO -  * Detected change in 'C:\\Users\\mtoto\\Downloads\\sentiment_analysis_app\\apps.py', reloading
+2025-04-05 23:02:08,251 - INFO -  * Detected change in 'C:\\Users\\mtoto\\Downloads\\sentiment_analysis_app\\apps.py', reloading
+2025-04-05 23:02:13,424 - INFO -  * Restarting with watchdog (windowsapi)
+2025-04-05 23:02:18,801 - INFO -  * Restarting with stat
+2025-04-05 23:02:36,649 - WARNING -  * Debugger is active!
+2025-04-05 23:02:36,681 - INFO -  * Debugger PIN: 744-314-316
+2025-04-05 23:02:40,532 - WARNING -  * Debugger is active!
+2025-04-05 23:02:40,560 - INFO -  * Debugger PIN: 105-406-013
+2025-04-05 23:04:19,436 - INFO - 127.0.0.1 - - [05/Apr/2025 23:04:19] "POST /upload HTTP/1.1" 200 -
+2025-04-05 23:04:57,102 - INFO - 127.0.0.1 - - [05/Apr/2025 23:04:57] "GET / HTTP/1.1" 200 -
+2025-04-05 23:05:10,514 - INFO - 127.0.0.1 - - [05/Apr/2025 23:05:10] "POST /train HTTP/1.1" 200 -
+2025-04-05 23:05:22,101 - INFO - 127.0.0.1 - - [05/Apr/2025 23:05:22] "POST /upload HTTP/1.1" 200 -
+2025-04-05 23:05:45,239 - INFO - 127.0.0.1 - - [05/Apr/2025 23:05:45] "POST /train HTTP/1.1" 200 -
+2025-04-05 23:17:59,073 - INFO -  * Detected change in 'C:\\Users\\mtoto\\Downloads\\sentiment_analysis_app\\apps.py', reloading
+2025-04-05 23:18:00,470 - INFO -  * Detected change in 'C:\\Users\\mtoto\\Downloads\\sentiment_analysis_app\\apps.py', reloading
+2025-04-05 23:18:01,741 - INFO -  * Restarting with watchdog (windowsapi)
+2025-04-05 23:24:10,985 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-04-05 23:24:10,986 - INFO - [33mPress CTRL+C to quit[0m
+2025-04-05 23:24:11,024 - INFO -  * Restarting with watchdog (windowsapi)
+2025-04-05 23:24:27,139 - WARNING -  * Debugger is active!
+2025-04-05 23:24:27,172 - INFO -  * Debugger PIN: 105-406-013
+2025-04-05 23:24:30,084 - INFO - 127.0.0.1 - - [05/Apr/2025 23:24:30] "GET / HTTP/1.1" 200 -
+2025-04-05 23:24:42,948 - INFO - 127.0.0.1 - - [05/Apr/2025 23:24:42] "POST /upload HTTP/1.1" 200 -
+2025-04-05 23:25:32,422 - INFO - 127.0.0.1 - - [05/Apr/2025 23:25:32] "POST /train HTTP/1.1" 200 -
+2025-04-05 23:28:10,387 - INFO - 127.0.0.1 - - [05/Apr/2025 23:28:10] "POST /predict HTTP/1.1" 200 -
