@@ -90,3 +90,55 @@
 2025-04-05 23:24:42,948 - INFO - 127.0.0.1 - - [05/Apr/2025 23:24:42] "POST /upload HTTP/1.1" 200 -
 2025-04-05 23:25:32,422 - INFO - 127.0.0.1 - - [05/Apr/2025 23:25:32] "POST /train HTTP/1.1" 200 -
 2025-04-05 23:28:10,387 - INFO - 127.0.0.1 - - [05/Apr/2025 23:28:10] "POST /predict HTTP/1.1" 200 -
+2025-04-06 12:28:42,994 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-04-06 12:28:42,995 - INFO - [33mPress CTRL+C to quit[0m
+2025-04-06 12:28:43,074 - INFO -  * Restarting with watchdog (windowsapi)
+2025-04-06 12:29:00,729 - WARNING -  * Debugger is active!
+2025-04-06 12:29:00,745 - INFO -  * Debugger PIN: 105-406-013
+2025-04-06 12:29:00,939 - INFO - 127.0.0.1 - - [06/Apr/2025 12:29:00] "GET / HTTP/1.1" 200 -
+2025-04-06 12:29:01,596 - INFO - 127.0.0.1 - - [06/Apr/2025 12:29:01] "GET /static/style.css HTTP/1.1" 200 -
+2025-04-06 12:29:01,893 - INFO - 127.0.0.1 - - [06/Apr/2025 12:29:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-04-06 12:29:17,788 - INFO - 127.0.0.1 - - [06/Apr/2025 12:29:17] "POST /upload HTTP/1.1" 200 -
+2025-04-06 12:29:17,878 - INFO - 127.0.0.1 - - [06/Apr/2025 12:29:17] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2025-04-06 12:30:07,089 - INFO - 127.0.0.1 - - [06/Apr/2025 12:30:07] "POST /train HTTP/1.1" 200 -
+2025-04-06 12:30:07,186 - INFO - 127.0.0.1 - - [06/Apr/2025 12:30:07] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2025-04-06 12:30:33,353 - INFO - 127.0.0.1 - - [06/Apr/2025 12:30:33] "POST /upload HTTP/1.1" 200 -
+2025-04-06 12:30:33,442 - INFO - 127.0.0.1 - - [06/Apr/2025 12:30:33] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2025-04-06 12:31:00,828 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-04-06 12:31:00,869 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-04-06 12:31:03,827 - INFO -  * Detected change in 'C:\\Users\\mtoto\\AppData\\Local\\Programs\\Python\\Python310\\Lib\\site-packages\\flask\\app.py', reloading
+2025-04-06 12:31:03,870 - INFO - 127.0.0.1 - - [06/Apr/2025 12:31:03] "[35m[1mPOST /train HTTP/1.1[0m" 500 -
+2025-04-06 12:31:04,007 - INFO - 127.0.0.1 - - [06/Apr/2025 12:31:04] "GET /train?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-04-06 12:31:04,128 - INFO - 127.0.0.1 - - [06/Apr/2025 12:31:04] "GET /train?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-04-06 12:31:04,358 - INFO - 127.0.0.1 - - [06/Apr/2025 12:31:04] "GET /train?__debugger__=yes&cmd=resource&f=console.png&s=m0GhJTL4yoaUjEWPXG6e HTTP/1.1" 200 -
+2025-04-06 12:31:04,403 - INFO - 127.0.0.1 - - [06/Apr/2025 12:31:04] "GET /train?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-04-06 12:38:14,472 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-04-06 12:38:14,474 - INFO - [33mPress CTRL+C to quit[0m
+2025-04-06 12:38:14,508 - INFO -  * Restarting with watchdog (windowsapi)
+2025-04-06 12:38:24,542 - WARNING -  * Debugger is active!
+2025-04-06 12:38:24,554 - INFO -  * Debugger PIN: 105-406-013
+2025-04-06 12:39:06,441 - INFO - 127.0.0.1 - - [06/Apr/2025 12:39:06] "GET / HTTP/1.1" 200 -
+2025-04-06 12:39:06,796 - INFO - 127.0.0.1 - - [06/Apr/2025 12:39:06] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2025-04-06 12:39:21,032 - INFO - 127.0.0.1 - - [06/Apr/2025 12:39:21] "POST /upload HTTP/1.1" 200 -
+2025-04-06 12:39:21,125 - INFO - 127.0.0.1 - - [06/Apr/2025 12:39:21] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2025-04-06 12:39:52,360 - INFO - 127.0.0.1 - - [06/Apr/2025 12:39:52] "POST /train HTTP/1.1" 200 -
+2025-04-06 12:39:52,496 - INFO - 127.0.0.1 - - [06/Apr/2025 12:39:52] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2025-04-06 12:41:00,879 - INFO - 127.0.0.1 - - [06/Apr/2025 12:41:00] "POST /predict HTTP/1.1" 200 -
+2025-04-06 12:41:00,987 - INFO - 127.0.0.1 - - [06/Apr/2025 12:41:00] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2025-04-06 12:47:15,211 - INFO -  * Detected change in 'C:\\Users\\mtoto\\Downloads\\sentiment_analysis_app\\apps.py', reloading
+2025-04-06 12:50:20,631 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-04-06 12:50:20,631 - INFO - [33mPress CTRL+C to quit[0m
+2025-04-06 12:50:20,708 - INFO -  * Restarting with watchdog (windowsapi)
+2025-04-06 12:50:31,380 - WARNING -  * Debugger is active!
+2025-04-06 12:50:31,398 - INFO -  * Debugger PIN: 105-406-013
+2025-04-06 12:51:29,839 - INFO - 127.0.0.1 - - [06/Apr/2025 12:51:29] "GET / HTTP/1.1" 200 -
+2025-04-06 12:51:30,430 - INFO - 127.0.0.1 - - [06/Apr/2025 12:51:30] "GET /static/style.css HTTP/1.1" 200 -
+2025-04-06 12:51:44,279 - INFO - 127.0.0.1 - - [06/Apr/2025 12:51:44] "POST /upload HTTP/1.1" 200 -
+2025-04-06 12:51:44,425 - INFO - 127.0.0.1 - - [06/Apr/2025 12:51:44] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2025-04-06 12:52:21,211 - INFO - 127.0.0.1 - - [06/Apr/2025 12:52:21] "POST /train HTTP/1.1" 200 -
+2025-04-06 12:52:21,318 - INFO - 127.0.0.1 - - [06/Apr/2025 12:52:21] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2025-04-06 12:53:45,299 - INFO - 127.0.0.1 - - [06/Apr/2025 12:53:45] "POST /predict HTTP/1.1" 200 -
+2025-04-06 12:53:45,716 - INFO - 127.0.0.1 - - [06/Apr/2025 12:53:45] "[36mGET /static/style.css HTTP/1.1[0m" 304 -

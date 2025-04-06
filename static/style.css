@@ -1,0 +1,156 @@
+body {
+    background: linear-gradient(135deg, #f0f4ff, #d6eaff);
+    color: #1e3a8a;
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    padding: 25px;
+    margin-bottom: 25px;
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+h1, h3, h4 {
+    color: #2563eb;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.btn-primary {
+    background: #2563eb;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #1e40af;
+}
+
+.btn-secondary {
+    background: #f43f5e;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: #e11d48;
+}
+
+.table {
+    background: #f8fafc;
+    border-radius: 10px;
+    overflow: hidden;
+    width: 100%;
+    table-layout: auto; /* Allows columns to adjust */
+}
+
+.table thead {
+    background: #dbeafe;
+    color: #1e3a8a;
+}
+
+.table-hover tbody tr:hover {
+    background: #eff6ff;
+}
+
+.table-responsive {
+    overflow-x: auto; /* Ensures tables scroll horizontally if needed */
+    max-width: 100%;
+}
+
+.table td, .table th {
+    word-wrap: break-word; /* Prevents long text from overflowing */
+    max-width: 300px; /* Limits column width */
+    white-space: normal; /* Allows text wrapping */
+}
+
+.form-control, select {
+    border: 2px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus, select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 5px rgba(37, 99, 235, 0.3);
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin: 15px 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.metrics-box {
+    background: #ecfeff;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    border-left: 4px solid #22d3ee;
+}
+
+.alert-danger {
+    background: #fee2e2;
+    color: #991b1b;
+    border-radius: 10px;
+    border-left: 4px solid #f87171;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    .card {
+        padding: 20px;
+    }
+    h1 {
+        font-size: 1.8rem;
+    }
+    .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    .form-control, select {
+        font-size: 0.9rem;
+    }
+    .table td, .table th {
+        max-width: 150px; /* Smaller max-width for tablets */
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.5rem;
+    }
+    .card {
+        padding: 15px;
+    }
+    .table td, .table th {
+        max-width: 100px; /* Even smaller for phones */
+    }
+}

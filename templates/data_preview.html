@@ -5,159 +5,169 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Preview - Sentiment Analysis</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
-            color: #1a237e;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .container {
-            max-width: 1000px;
-            margin-top: 40px;
-            padding: 20px;
-        }
-        .card {
-            background: #ffffff;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            padding: 20px;
-        }
-        h1, h3, h4 {
-            color: #0288d1;
-            font-weight: 600;
-        }
-        .btn-primary {
-            background-color: #0288d1;
-            border-color: #0288d1;
-            transition: all 0.3s ease;
-        }
-        .btn-primary:hover {
-            background-color: #0277bd;
-            border-color: #0277bd;
-        }
-        .btn-secondary {
-            background-color: #ff6b6b;
-            border-color: #ff6b6b;
-            transition: all 0.3s ease;
-        }
-        .btn-secondary:hover {
-            background-color: #ff8787;
-            border-color: #ff8787;
-        }
-        .btn-outline-primary {
-            border-color: #0288d1;
-            color: #0288d1;
-        }
-        .btn-outline-primary:hover {
-            background-color: #e1f5fe;
-        }
-        .table-striped tbody tr:nth-of-type(odd) {
-            background-color: #f5faff;
-        }
-        .table-hover tbody tr:hover {
-            background-color: #e3f2fd;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
-            margin-top: 10px;
-        }
-        .alert-danger {
-            background-color: #ffebee;
-            color: #d32f2f;
-            border: none;
-            border-radius: 10px;
-        }
-        .metrics-box {
-            background: #e1f5fe;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1 class="mb-4 text-center">Data Preview</h1>
+        <h1 class="mb-5 text-center">Data Preview</h1>
         
         <div class="card">
-            <div class="card-body">
-                <h3>Data Sample</h3>
-                {{ data|safe }}
+            <h3>Data Sample</h3>
+            {{ data|safe }}
+            {% if summary %}
+            <div class="metrics-box">
+                <h4>Data Summary</h4>
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Data Type</th>
+                            <th>Null Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for col in summary.dtypes.keys() %}
+                        <tr>
+                            <td>{{ col }}</td>
+                            <td>{{ summary.dtypes[col] }}</td>
+                            <td>{{ summary.null_counts[col] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if summary.class_dist %}
+                <h5>Class Distribution</h5>
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Sentiment</th>
+                            <th>Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sentiment, count in summary.class_dist.items() %}
+                        <tr>
+                            <td>{{ sentiment }}</td>
+                            <td>{{ count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
             </div>
+            {% endif %}
         </div>
 
         <div class="card">
-            <div class="card-body">
-                <h3>Train Model</h3>
-                <form action="/train" method="post">
-                    <div class="mb-3">
-                        <label for="text_column" class="form-label">Text Column:</label>
-                        <input type="text" class="form-control" name="text_column" id="text_column" value="{{ text_column }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="sentiment_column" class="form-label">Sentiment Column (optional):</label>
-                        <input type="text" class="form-control" name="sentiment_column" id="sentiment_column" value="{{ sentiment_column }}">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Train Model</button>
-                </form>
-            </div>
+            <h3>Train Model</h3>
+            <form action="/train" method="post">
+                <div class="mb-3">
+                    <label class="form-label">Text Column:</label>
+                    <select class="form-control" name="text_column" required>
+                        {% for col in columns %}
+                        <option value="{{ col }}" {% if col == text_column %}selected{% endif %}>{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Sentiment Column:</label>
+                    <select class="form-control" name="sentiment_column">
+                        <option value="">None</option>
+                        {% for col in columns %}
+                        <option value="{{ col }}" {% if col == sentiment_column %}selected{% endif %}>{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Model Type:</label>
+                    <select class="form-control" name="model_type" required>
+                        <option value="logistic">Logistic Regression</option>
+                        <option value="naive_bayes">Naive Bayes</option>
+                        <option value="svm">SVM</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Train Split Ratio:</label>
+                    <select class="form-control" name="split_ratio" required>
+                        <option value="0.8">80-20</option>
+                        <option value="0.7">70-30</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Train Model</button>
+            </form>
         </div>
 
         <div class="card">
-            <div class="card-body">
-                <h3>Predict Sentiment</h3>
-                <form action="/predict" method="post">
-                    <div class="mb-3">
-                        <label for="text" class="form-label">Enter Text:</label>
-                        <textarea class="form-control" name="text" id="text" rows="5" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Predict</button>
-                </form>
-            </div>
+            <h3>Predict Sentiment</h3>
+            <form action="/predict" method="post">
+                <div class="mb-3">
+                    <label class="form-label">Enter Text:</label>
+                    <textarea class="form-control" name="text" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Predict</button>
+            </form>
         </div>
+
+        {% if metrics %}
+        <div class="card">
+            <h3>Model Results</h3>
+            <div class="metrics-box">
+                <p><strong>Accuracy:</strong> {{ metrics.accuracy|round(2) }}</p>
+                <p><strong>Precision:</strong> {{ metrics.precision|round(2) }}</p>
+                <p><strong>Recall:</strong> {{ metrics.recall|round(2) }}</p>
+                <p><strong>F1-Score:</strong> {{ metrics.f1|round(2) }}</p>
+                <p><strong>Cross-Val Mean:</strong> {{ metrics.cv_mean|round(2) }} (±{{ metrics.cv_std|round(2) }})</p>
+                <p><strong>Confusion Matrix:</strong> {{ metrics.confusion_matrix }}</p>
+            </div>
+            {% if counts_before and counts_after %}
+            <h4>Sentiment Counts</h4>
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Sentiment</th>
+                        <th>Before Prediction</th>
+                        <th>After Prediction</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sentiment in ['positive', 'negative', 'neutral'] %}
+                    <tr>
+                        <td>{{ sentiment.capitalize() }}</td>
+                        <td>{{ counts_before.get(sentiment, 0) }}</td>
+                        <td>{{ counts_after.get(sentiment, 0) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+            {% if top_5 is defined %}
+            <h4>Top 5 Cleaned Predictions</h4>
+            <div class="table-responsive">
+                {{ top_5.to_html(classes='table table-striped table-hover', index=False) | safe }}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
 
         {% if result %}
         <div class="card">
-            <div class="card-body">
-                <h3>Results</h3>
-                <p>{{ result }}</p>
-                {% if top_5 %}
-                <h4>Top 5 Predictions</h4>
-                {{ top_5|safe }}
-                {% endif %}
-                {% if sentiment_counts_before %}
-                <div class="metrics-box">
-                    <h4>Sentiment Counts (Before Review)</h4>
-                    <p>Positive: {{ sentiment_counts_before.get('positive', 0) }} | Negative: {{ sentiment_counts_before.get('negative', 0) }} | Neutral: {{ sentiment_counts_before.get('neutral', 0) }}</p>
-                    <h4>Sentiment Counts (After Review)</h4>
-                    <p>Positive: {{ sentiment_counts_after.get('positive', 0) }} | Negative: {{ sentiment_counts_after.get('negative', 0) }} | Neutral: {{ sentiment_counts_after.get('neutral', 0) }}</p>
-                </div>
-                {% endif %}
-                {% if report %}
-                <div class="metrics-box">
-                    <h4>Detailed Metrics</h4>
-                    <p>Accuracy: {{ report.get('accuracy', 0)|round(2) }}</p>
-                    <p>Precision (Weighted): {{ report.get('weighted avg', {}).get('precision', 0)|round(2) }}</p>
-                    <p>Recall (Weighted): {{ report.get('weighted avg', {}).get('recall', 0)|round(2) }}</p>
-                    <p>F1-Score (Weighted): {{ report.get('weighted avg', {}).get('f1-score', 0)|round(2) }}</p>
-                </div>
-                {% endif %}
-                {% if eda_plots %}
-                <h4>Exploratory Data Analysis</h4>
-                {% if eda_plots.sentiment_dist %}
-                <img src="data:image/png;base64,{{ eda_plots.sentiment_dist }}" alt="Sentiment Distribution">
-                {% endif %}
-                {% if eda_plots.word_cloud %}
-                <img src="data:image/png;base64,{{ eda_plots.word_cloud }}" alt="Word Cloud">
-                {% endif %}
-                {% if eda_plots.text_length %}
-                <img src="data:image/png;base64,{{ eda_plots.text_length }}" alt="Text Length Distribution">
-                {% endif %}
-                {% endif %}
-            </div>
+            <h3>Prediction Result</h3>
+            <p>{{ result }}</p>
+            <p><strong>Probabilities:</strong> {{ probs }}</p>
+            {% if explanation %}
+            <h4>Explainability</h4>
+            {{ explanation|safe }}
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if eda_plots %}
+        <div class="card">
+            <h3>Exploratory Data Analysis</h3>
+            {% for key, value in eda_plots.items() %}
+            <img src="data:image/png;base64,{{ value }}" alt="{{ key.replace('_', ' ').title() }}">
+            {% endfor %}
         </div>
         {% endif %}
 
@@ -165,9 +175,9 @@
         <div class="alert alert-danger">{{ error }}</div>
         {% endif %}
 
-        <div class="text-center">
-            <a href="/download" class="btn btn-secondary me-2">Download Results</a>
-            <a href="/" class="btn btn-outline-primary">Back to Upload</a>
+        <div class="text-center mt-4">
+            <a href="/download" class="btn btn-secondary me-3">Download Results</a>
+            <a href="/" class="btn btn-primary">Back to Upload</a>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
