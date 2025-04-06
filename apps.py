@@ -57,14 +57,12 @@ def clean_text(text):
     return ' '.join(tokens)
 
 def clean_text_vectorized(text_series):
-    # Vectorized version of clean_text for better performance
-    text_series = text_series.fillna('')  # Handle NaN
+    text_series = text_series.fillna('')
     text_series = text_series.str.lower()
     text_series = text_series.str.replace(r'http\S+|www\S+|https\S+', '', regex=True)
     text_series = text_series.str.replace(r'[^\w\s]', '', regex=True)
     text_series = text_series.str.replace(r'\d+', '', regex=True)
     text_series = text_series.str.replace(r'[^\x00-\x7F]+', '', regex=True)
-    # Tokenization and stemming still need apply due to NLTK
     return text_series.apply(lambda x: ' '.join([stemmer.stem(word) for word in word_tokenize(x) if word not in stop_words]))
 
 def detect_encoding(file):
@@ -107,13 +105,12 @@ def plot_to_base64(fig):
     img = io.BytesIO()
     fig.savefig(img, format='png', bbox_inches='tight')
     img.seek(0)
-    plt.close(fig)
+    plt.close(fig)  # Explicitly close to free memory
     return base64.b64encode(img.getvalue()).decode('utf8')
 
 def generate_eda_plots(df, text_column, sentiment_column):
     plots = {}
     try:
-        # Sample data to reduce memory usage
         df_sample = df.sample(n=min(1000, len(df)), random_state=42) if len(df) > 1000 else df
         
         if sentiment_column in df_sample.columns:
@@ -122,15 +119,16 @@ def generate_eda_plots(df, text_column, sentiment_column):
             ax.set_title("Sentiment Distribution")
             plots['sentiment_dist'] = plot_to_base64(fig)
 
-            for sentiment in df_sample[sentiment_column].unique():
-                text = ' '.join(df_sample[df_sample[sentiment_column] == sentiment][text_column].dropna())
-                if text:
-                    wc = WordCloud(width=300, height=150, background_color='white').generate(text)
-                    fig, ax = plt.subplots(figsize=(6, 3))
-                    ax.imshow(wc, interpolation='bilinear')
-                    ax.axis('off')
-                    ax.set_title(f"{str(sentiment).capitalize()} Word Cloud")
-                    plots[f'word_cloud_{str(sentiment)}'] = plot_to_base64(fig)
+            # Limit word cloud to one sentiment (e.g., most frequent) to save memory
+            most_frequent_sentiment = df_sample[sentiment_column].mode()[0]
+            text = ' '.join(df_sample[df_sample[sentiment_column] == most_frequent_sentiment][text_column].dropna())
+            if text:
+                wc = WordCloud(width=300, height=150, background_color='white').generate(text)
+                fig, ax = plt.subplots(figsize=(6, 3))
+                ax.imshow(wc, interpolation='bilinear')
+                ax.axis('off')
+                ax.set_title(f"{str(most_frequent_sentiment).capitalize()} Word Cloud")
+                plots['word_cloud'] = plot_to_base64(fig)
 
         df_sample['text_length'] = df_sample[text_column].astype(str).apply(len)
         fig, ax = plt.subplots(figsize=(6, 4))
@@ -143,12 +141,11 @@ def generate_eda_plots(df, text_column, sentiment_column):
 
 def train_model(df, text_column, sentiment_column, model_type, split_ratio):
     try:
-        # Sample data for training to fit Render's memory limit
         df = df.dropna(subset=[text_column, sentiment_column])
-        if len(df) > 1000:  # Limit to 1000 rows
+        if len(df) > 1000:
             df = df.sample(n=1000, random_state=42)
         
-        X = clean_text_vectorized(df[text_column])  # Use vectorized cleaning
+        X = clean_text_vectorized(df[text_column])
         y = df[sentiment_column]
         vectorizer = TfidfVectorizer(max_features=5000)
         X = vectorizer.fit_transform(X)
@@ -227,7 +224,6 @@ def train():
         model, vectorizer, metrics, counts_before, counts_after = train_model(df, text_column, sentiment_column, model_type, split_ratio)
         eda_plots = generate_eda_plots(df, text_column, sentiment_column)
         
-        # Limit cleaned text generation to sampled data
         df_sample = df.sample(n=min(1000, len(df)), random_state=42) if len(df) > 1000 else df
         df_sample['cleaned_text'] = clean_text_vectorized(df_sample[text_column])
         X = vectorizer.transform(df_sample['cleaned_text'])
