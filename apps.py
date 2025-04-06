@@ -12,7 +12,7 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split, cross_val_score
-from xgboost import XGBClassifier  # New model for better accuracy
+from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix, classification_report
 import io
 import base64
@@ -56,8 +56,16 @@ def clean_text_vectorized(text_series):
     return text_series.apply(lambda x: ' '.join([stemmer.stem(word) for word in word_tokenize(x) if word not in stop_words]))
 
 def map_sentiment_labels(series):
-    # Convert numeric sentiments to text labels
-    return series.apply(lambda x: SENTIMENT_MAP.get(x, str(x)) if pd.notnull(x) else 'Neutral')
+    # Convert numeric or text sentiments to standard labels, default to Neutral for unknowns
+    def map_value(x):
+        if pd.isna(x):
+            return 'Neutral'
+        if isinstance(x, (int, float)) and x in SENTIMENT_MAP:
+            return SENTIMENT_MAP[x]
+        if isinstance(x, str) and x in REVERSE_MAP:
+            return x
+        return 'Neutral'  # Fallback for unrecognized values
+    return series.apply(map_value)
 
 def detect_encoding(file):
     raw_data = file.read()
@@ -97,7 +105,7 @@ def get_data_summary(df):
 
 def plot_to_base64(fig):
     img = io.BytesIO()
-    fig.savefig(img, format='png', bbox_inches='tight', dpi=100)  # Lower DPI for smaller size
+    fig.savefig(img, format='png', bbox_inches='tight', dpi=100)
     img.seek(0)
     plt.close(fig)
     return base64.b64encode(img.getvalue()).decode('utf8')
@@ -108,7 +116,8 @@ def generate_eda_plots(df, text_column, sentiment_column):
         df_sample = df.sample(n=min(1000, len(df)), random_state=42) if len(df) > 1000 else df
         
         if sentiment_column in df_sample.columns:
-            fig, ax = plt.subplots(figsize=(5, 3))  # Smaller size
+            df_sample[sentiment_column] = map_sentiment_labels(df_sample[sentiment_column])
+            fig, ax = plt.subplots(figsize=(5, 3))
             sns.countplot(x=sentiment_column, hue=sentiment_column, data=df_sample, palette=['#ff6b6b', '#4ecdc4', '#45b7d1'], legend=False)
             ax.set_title("Sentiment Distribution", fontsize=10)
             plots['sentiment_dist'] = plot_to_base64(fig)
@@ -138,23 +147,25 @@ def train_model(df, text_column, sentiment_column, model_type, split_ratio):
         if len(df) > 1000:
             df = df.sample(n=1000, random_state=42)
         
-        # Map sentiments to text labels, then to numeric for XGBoost
+        # Map sentiments and ensure valid labels
         df[sentiment_column] = map_sentiment_labels(df[sentiment_column])
-        y = df[sentiment_column].map(REVERSE_MAP)  # Convert to numeric for model
+        y = df[sentiment_column].map(REVERSE_MAP)  # Convert to numeric
+        if y.isnull().all():
+            raise ValueError("All sentiment values are invalid or NaN after mapping.")
+        
         X = clean_text_vectorized(df[text_column])
-        vectorizer = TfidfVectorizer(max_features=5000, ngram_range=(1, 2))  # Add bigrams for better accuracy
+        vectorizer = TfidfVectorizer(max_features=5000, ngram_range=(1, 2))
         X = vectorizer.fit_transform(X)
         
         counts_before = pd.Series(df[sentiment_column]).value_counts().to_dict()
         
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=(1 - split_ratio), random_state=42)
         
-        # Use XGBoost for better accuracy
         model = XGBClassifier(use_label_encoder=False, eval_metric='mlogloss', n_estimators=100, max_depth=5, learning_rate=0.1)
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
         
-        y_pred_labels = pd.Series(y_pred).map(SENTIMENT_MAP)  # Convert predictions back to labels
+        y_pred_labels = pd.Series(y_pred).map(SENTIMENT_MAP)
         y_test_labels = pd.Series(y_test).map(SENTIMENT_MAP)
         counts_after = y_pred_labels.value_counts().to_dict()
         
@@ -167,7 +178,7 @@ def train_model(df, text_column, sentiment_column, model_type, split_ratio):
         joblib.dump(vectorizer, '/tmp/vectorizer.pkl')
         
         return model, vectorizer, {
-            'accuracy': f"{accuracy:.2%}",  # Percentage format
+            'accuracy': f"{accuracy:.2%}",
             'precision': f"{precision:.2%}",
             'recall': f"{recall:.2%}",
             'f1': f"{f1:.2%}",
@@ -230,7 +241,7 @@ def train():
         top_5 = df_sample[[text_column, 'predicted_sentiment']].head()
         return render_template('data_preview.html', data=df.head().to_html(classes='table table-striped table-hover'),
                                text_column=text_column, sentiment_column=sentiment_column, metrics=metrics,
-                               eda_plots=eda_plots, top_5=top_5.to_dict('records'),  # Cleaner output
+                               eda_plots=eda_plots, top_5=top_5.to_dict('records'),
                                counts_before=counts_before, counts_after=counts_after,
                                columns=columns)
     except Exception as e:
