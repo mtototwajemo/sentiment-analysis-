@@ -36,7 +36,7 @@ logging.basicConfig(level=logging.INFO, filename='/tmp/app.log', filemode='a',
 try:
     nltk.download('stopwords', quiet=True)
     nltk.download('punkt', quiet=True)
-    nltk.download('punkt_tab', quiet=True)  # Explicitly download punkt_tab
+    nltk.download('punkt_tab', quiet=True)
 except Exception as e:
     logging.error(f"Failed to download NLTK resources: {e}")
 
@@ -102,25 +102,28 @@ def plot_to_base64(fig):
 def generate_eda_plots(df, text_column, sentiment_column):
     plots = {}
     try:
-        if sentiment_column in df.columns:
-            fig, ax = plt.subplots(figsize=(8, 5))
-            sns.countplot(x=sentiment_column, data=df, palette=['#ff6b6b', '#4ecdc4', '#45b7d1'])
+        # Sample data to reduce memory usage on Render
+        df_sample = df.sample(n=min(1000, len(df)), random_state=42) if len(df) > 1000 else df
+        
+        if sentiment_column in df_sample.columns:
+            fig, ax = plt.subplots(figsize=(6, 4))  # Smaller figure size
+            sns.countplot(x=sentiment_column, hue=sentiment_column, data=df_sample, palette=['#ff6b6b', '#4ecdc4', '#45b7d1'], legend=False)
             ax.set_title("Sentiment Distribution")
             plots['sentiment_dist'] = plot_to_base64(fig)
 
-            for sentiment in df[sentiment_column].unique():
-                text = ' '.join(df[df[sentiment_column] == sentiment][text_column].dropna())
+            for sentiment in df_sample[sentiment_column].unique():
+                text = ' '.join(df_sample[df_sample[sentiment_column] == sentiment][text_column].dropna())
                 if text:
-                    wc = WordCloud(width=400, height=200, background_color='white').generate(text)
-                    fig, ax = plt.subplots(figsize=(8, 4))
+                    wc = WordCloud(width=300, height=150, background_color='white').generate(text)  # Smaller word cloud
+                    fig, ax = plt.subplots(figsize=(6, 3))
                     ax.imshow(wc, interpolation='bilinear')
                     ax.axis('off')
                     ax.set_title(f"{str(sentiment).capitalize()} Word Cloud")
                     plots[f'word_cloud_{str(sentiment)}'] = plot_to_base64(fig)
 
-        df['text_length'] = df[text_column].astype(str).apply(len)
-        fig, ax = plt.subplots(figsize=(8, 5))
-        sns.histplot(df['text_length'], bins=30, kde=True, color='#4ecdc4')
+        df_sample['text_length'] = df_sample[text_column].astype(str).apply(len)
+        fig, ax = plt.subplots(figsize=(6, 4))
+        sns.histplot(df_sample['text_length'], bins=20, kde=True, color='#4ecdc4')  # Fewer bins
         ax.set_title("Text Length Distribution")
         plots['text_length'] = plot_to_base64(fig)
     except Exception as e:
@@ -156,7 +159,6 @@ def train_model(df, text_column, sentiment_column, model_type, split_ratio):
         cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
         cv_scores = cross_val_score(model, X, y, cv=5)
         
-        # Use /tmp for Render compatibility
         joblib.dump(model, '/tmp/model.pkl')
         joblib.dump(vectorizer, '/tmp/vectorizer.pkl')
         
@@ -180,7 +182,7 @@ def upload_file():
     file = request.files['file']
     if not file.filename:
         return redirect(url_for('index'))
-    file_path = '/tmp/uploaded_data.csv'  # Use /tmp for Render
+    file_path = '/tmp/uploaded_data.csv'
     file.save(file_path)
     df = load_file(open(file_path, 'rb'))
     if df is None or df.empty:
