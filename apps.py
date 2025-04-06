@@ -32,9 +32,14 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO, filename='/tmp/app.log', filemode='a',
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Download NLTK resources
-nltk.download('stopwords', quiet=True)
-nltk.download('punkt', quiet=True)
+# Download NLTK resources at startup
+try:
+    nltk.download('stopwords', quiet=True)
+    nltk.download('punkt', quiet=True)
+    nltk.download('punkt_tab', quiet=True)  # Explicitly download punkt_tab
+except Exception as e:
+    logging.error(f"Failed to download NLTK resources: {e}")
+
 stop_words = set(stopwords.words('english'))
 stemmer = PorterStemmer()
 
