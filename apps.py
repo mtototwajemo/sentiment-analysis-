@@ -23,12 +23,13 @@ import logging
 import json
 import chardet
 import os
-from lime.lime_text import LimeTextExplainer
+import tempfile
+import traceback
 
 app = Flask(__name__)
 
-# Initialize logging
-logging.basicConfig(level=logging.INFO, filename='app.log', filemode='a',
+# Initialize logging to capture errors
+logging.basicConfig(level=logging.INFO, filename='/tmp/app.log', filemode='a',
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Download NLTK resources
@@ -95,67 +96,151 @@ def plot_to_base64(fig):
 
 def generate_eda_plots(df, text_column, sentiment_column):
     plots = {}
-    if sentiment_column in df.columns:
+    try:
+        if sentiment_column in df.columns:
+            fig, ax = plt.subplots(figsize=(8, 5))
+            sns.countplot(x=sentiment_column, data=df, palette=['#ff6b6b', '#4ecdc4', '#45b7d1'])
+            ax.set_title("Sentiment Distribution")
+            plots['sentiment_dist'] = plot_to_base64(fig)
+
+            for sentiment in df[sentiment_column].unique():
+                text = ' '.join(df[df[sentiment_column] == sentiment][text_column].dropna())
+                if text:
+                    wc = WordCloud(width=400, height=200, background_color='white').generate(text)
+                    fig, ax = plt.subplots(figsize=(8, 4))
+                    ax.imshow(wc, interpolation='bilinear')
+                    ax.axis('off')
+                    ax.set_title(f"{str(sentiment).capitalize()} Word Cloud")
+                    plots[f'word_cloud_{str(sentiment)}'] = plot_to_base64(fig)
+
+        df['text_length'] = df[text_column].astype(str).apply(len)
         fig, ax = plt.subplots(figsize=(8, 5))
-        sns.countplot(x=sentiment_column, data=df, palette=['#ff6b6b', '#4ecdc4', '#45b7d1'])
-        ax.set_title("Sentiment Distribution")
-        plots['sentiment_dist'] = plot_to_base64(fig)
-
-        for sentiment in df[sentiment_column].unique():
-            text = ' '.join(df[df[sentiment_column] == sentiment][text_column].dropna())
-            if text:
-                wc = WordCloud(width=400, height=200, background_color='white').generate(text)
-                fig, ax = plt.subplots(figsize=(8, 4))
-                ax.imshow(wc, interpolation='bilinear')
-                ax.axis('off')
-                ax.set_title(f"{str(sentiment).capitalize()} Word Cloud")
-                plots[f'word_cloud_{str(sentiment)}'] = plot_to_base64(fig)
-
-    df['text_length'] = df[text_column].astype(str).apply(len)
-    fig, ax = plt.subplots(figsize=(8, 5))
-    sns.histplot(df['text_length'], bins=30, kde=True, color='#4ecdc4')
-    ax.set_title("Text Length Distribution")
-    plots['text_length'] = plot_to_base64(fig)
+        sns.histplot(df['text_length'], bins=30, kde=True, color='#4ecdc4')
+        ax.set_title("Text Length Distribution")
+        plots['text_length'] = plot_to_base64(fig)
+    except Exception as e:
+        logging.error(f"Error in generate_eda_plots: {e}")
     return plots
 
 def train_model(df, text_column, sentiment_column, model_type, split_ratio):
-    df = df.dropna(subset=[text_column, sentiment_column])
-    X = df[text_column].apply(clean_text)
-    y = df[sentiment_column]
-    vectorizer = TfidfVectorizer(max_features=5000)
-    X = vectorizer.fit_transform(X)
-    
-    # Sentiment counts before prediction
-    counts_before = pd.Series(y).value_counts().to_dict()
-    
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=(1 - split_ratio), random_state=42)
-    
-    if model_type == 'logistic':
-        model = LogisticRegression(max_iter=1000, class_weight='balanced')
-    elif model_type == 'naive_bayes':
-        model = MultinomialNB()
-    else:  # svm
-        model = SVC(probability=True, class_weight='balanced')
-    
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    
-    # Sentiment counts after prediction
-    counts_after = pd.Series(y_pred).value_counts().to_dict()
-    
-    accuracy = accuracy_score(y_test, y_pred)
-    precision, recall, f1, _ = precision_recall_fscore_support(y_test, y_pred, average='weighted')
-    cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
-    cv_scores = cross_val_score(model, X, y, cv=5)
-    
-    joblib.dump(model, 'model.pkl')
-    joblib.dump(vectorizer, 'vectorizer.pkl')
-    
-    return model, vectorizer, {
-        'accuracy': accuracy, 'precision': precision, 'recall': recall, 'f1': f1,
-        'confusion_matrix': cm.tolist(), 'cv_mean': cv_scores.mean(), 'cv_std': cv_scores.std(),
-        'classes': model.classes_.tolist()
-    }, counts_before, counts_after
+    try:
+        df = df.dropna(subset=[text_column, sentiment_column])
+        X = df[text_column].apply(clean_text)
+        y = df[sentiment_column]
+        vectorizer = TfidfVectorizer(max_features=5000)
+        X = vectorizer.fit_transform(X)
+        
+        counts_before = pd.Series(y).value_counts().to_dict()
+        
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=(1 - split_ratio), random_state=42)
+        
+        if model_type == 'logistic':
+            model = LogisticRegression(max_iter=1000, class_weight='balanced')
+        elif model_type == 'naive_bayes':
+            model = MultinomialNB()
+        else:  # svm
+            model = SVC(probability=True, class_weight='balanced')
+        
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        
+        counts_after = pd.Series(y_pred).value_counts().to_dict()
+        
+        accuracy = accuracy_score(y_test, y_pred)
+        precision, recall, f1, _ = precision_recall_fscore_support(y_test, y_pred, average='weighted')
+        cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
+        cv_scores = cross_val_score(model, X, y, cv=5)
+        
+        # Use /tmp for Render compatibility
+        joblib.dump(model, '/tmp/model.pkl')
+        joblib.dump(vectorizer, '/tmp/vectorizer.pkl')
+        
+        return model, vectorizer, {
+            'accuracy': accuracy, 'precision': precision, 'recall': recall, 'f1': f1,
+            'confusion_matrix': cm.tolist(), 'cv_mean': cv_scores.mean(), 'cv_std': cv_scores.std(),
+            'classes': model.classes_.tolist()
+        }, counts_before, counts_after
+    except Exception as e:
+        logging.error(f"Error in train_model: {e}\n{traceback.format_exc()}")
+        raise
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return redirect(url_for('index'))
+    file = request.files['file']
+    if not file.filename:
+        return redirect(url_for('index'))
+    file_path = '/tmp/uploaded_data.csv'  # Use /tmp for Render
+    file.save(file_path)
+    df = load_file(open(file_path, 'rb'))
+    if df is None or df.empty:
+        return render_template('index.html', error="Invalid or empty file.")
+    text_column, sentiment_column = detect_columns(df)
+    summary = get_data_summary(df)
+    columns = df.columns.tolist()
+    return render_template('data_preview.html', data=df.head().to_html(classes='table table-striped table-hover'),
+                           text_column=text_column, sentiment_column=sentiment_column, summary=summary, columns=columns)
+
+@app.route('/train', methods=['POST'])
+def train():
+    try:
+        text_column = request.form['text_column']
+        sentiment_column = request.form['sentiment_column']
+        model_type = request.form['model_type']
+        split_ratio = float(request.form['split_ratio'])
+        
+        file_path = '/tmp/uploaded_data.csv'
+        if not os.path.exists(file_path):
+            return render_template('data_preview.html', error="No uploaded data found.")
+        
+        df = load_file(open(file_path, 'rb'))
+        if df is None or text_column not in df.columns or (sentiment_column and sentiment_column not in df.columns):
+            return render_template('data_preview.html', error="Invalid columns selected.")
+        
+        model, vectorizer, metrics, counts_before, counts_after = train_model(df, text_column, sentiment_column, model_type, split_ratio)
+        eda_plots = generate_eda_plots(df, text_column, sentiment_column)
+        
+        df['cleaned_text'] = df[text_column].apply(clean_text)
+        X = vectorizer.transform(df['cleaned_text'])
+        df['predicted_sentiment'] = model.predict(X)
+        
+        columns = df.columns.tolist()
+        top_5 = df[[text_column, 'predicted_sentiment']].head()
+        return render_template('data_preview.html', data=df.head().to_html(classes='table table-striped table-hover'),
+                               text_column=text_column, sentiment_column=sentiment_column, metrics=metrics,
+                               eda_plots=eda_plots, top_5=top_5,
+                               counts_before=counts_before, counts_after=counts_after,
+                               columns=columns)
+    except Exception as e:
+        logging.error(f"Error in /train route: {e}\n{traceback.format_exc()}")
+        return render_template('data_preview.html', error=f"Training failed: {str(e)}")
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        text = request.form['text']
+        model = joblib.load('/tmp/model.pkl')
+        vectorizer = joblib.load('/tmp/vectorizer.pkl')
+        pred, probs = predict_sentiment(text, model, vectorizer)
+        explanation = get_explainability(text, model, vectorizer, model.classes_.tolist())
+        
+        file_path = '/tmp/uploaded_data.csv'
+        df = load_file(open(file_path, 'rb')) if os.path.exists(file_path) else pd.DataFrame()
+        text_column, sentiment_column = detect_columns(df) if not df.empty else ("", "")
+        summary = get_data_summary(df)
+        columns = df.columns.tolist()
+        
+        return render_template('data_preview.html', data=df.head().to_html(classes='table table-striped table-hover'),
+                               text_column=text_column, sentiment_column=sentiment_column, result=f"Predicted: {str(pred)}", probs=probs,
+                               explanation=explanation, summary=summary, columns=columns)
+    except Exception as e:
+        logging.error(f"Error in /predict route: {e}\n{traceback.format_exc()}")
+        return render_template('data_preview.html', error=f"Prediction failed: {str(e)}")
 
 def predict_sentiment(text, model, vectorizer):
     cleaned_text = clean_text(text)
@@ -172,93 +257,27 @@ def get_explainability(text, model, vectorizer, class_names):
     exp = explainer.explain_instance(cleaned_text, pred_fn, num_features=10)
     return exp.as_html()
 
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    if 'file' not in request.files:
-        return redirect(url_for('index'))
-    file = request.files['file']
-    if not file.filename:
-        return redirect(url_for('index'))
-    file_path = os.path.join(os.getcwd(), 'uploaded_data.csv')
-    file.save(file_path)
-    df = load_file(open(file_path, 'rb'))
-    if df is None or df.empty:
-        return render_template('index.html', error="Invalid or empty file.")
-    text_column, sentiment_column = detect_columns(df)
-    summary = get_data_summary(df)
-    columns = df.columns.tolist()
-    return render_template('data_preview.html', data=df.head().to_html(classes='table table-striped table-hover'),
-                           text_column=text_column, sentiment_column=sentiment_column, summary=summary, columns=columns)
-
-@app.route('/train', methods=['POST'])
-def train():
-    text_column = request.form['text_column']
-    sentiment_column = request.form['sentiment_column']
-    model_type = request.form['model_type']
-    split_ratio = float(request.form['split_ratio'])
-    
-    file_path = os.path.join(os.getcwd(), 'uploaded_data.csv')
-    if not os.path.exists(file_path):
-        return render_template('data_preview.html', error="No uploaded data found.")
-    
-    df = load_file(open(file_path, 'rb'))
-    if df is None or text_column not in df.columns or (sentiment_column and sentiment_column not in df.columns):
-        return render_template('data_preview.html', error="Invalid columns selected.")
-    
-    model, vectorizer, metrics, counts_before, counts_after = train_model(df, text_column, sentiment_column, model_type, split_ratio)
-    eda_plots = generate_eda_plots(df, text_column, sentiment_column)
-    
-    df['cleaned_text'] = df[text_column].apply(clean_text)
-    X = vectorizer.transform(df['cleaned_text'])
-    df['predicted_sentiment'] = model.predict(X)
-    
-    columns = df.columns.tolist()
-    top_5 = df[[text_column, 'predicted_sentiment']].head()
-    return render_template('data_preview.html', data=df.head().to_html(classes='table table-striped table-hover'),
-                           text_column=text_column, sentiment_column=sentiment_column, metrics=metrics,
-                           eda_plots=eda_plots, top_5=top_5,
-                           counts_before=counts_before, counts_after=counts_after,
-                           columns=columns)
-
-@app.route('/predict', methods=['POST'])
-def predict():
-    text = request.form['text']
-    model = joblib.load('model.pkl')
-    vectorizer = joblib.load('vectorizer.pkl')
-    pred, probs = predict_sentiment(text, model, vectorizer)
-    explanation = get_explainability(text, model, vectorizer, model.classes_.tolist())
-    
-    file_path = os.path.join(os.getcwd(), 'uploaded_data.csv')
-    df = load_file(open(file_path, 'rb')) if os.path.exists(file_path) else pd.DataFrame()
-    text_column, sentiment_column = detect_columns(df) if not df.empty else ("", "")
-    summary = get_data_summary(df)
-    columns = df.columns.tolist()
-    
-    return render_template('data_preview.html', data=df.head().to_html(classes='table table-striped table-hover'),
-                           text_column=text_column, sentiment_column=sentiment_column, result=f"Predicted: {str(pred)}", probs=probs,
-                           explanation=explanation, summary=summary, columns=columns)
-
 @app.route('/download')
 def download():
-    file_path = os.path.join(os.getcwd(), 'uploaded_data.csv')
-    if not os.path.exists(file_path):
-        return render_template('data_preview.html', error="No data to download.")
-    
-    df = load_file(open(file_path, 'rb'))
-    model = joblib.load('model.pkl')
-    vectorizer = joblib.load('vectorizer.pkl')
-    text_column, _ = detect_columns(df)
-    df['cleaned_text'] = df[text_column].apply(clean_text)
-    df['predicted_sentiment'] = model.predict(vectorizer.transform(df['cleaned_text']))
-    
-    output = io.BytesIO()
-    df.to_csv(output, index=False)
-    output.seek(0)
-    return send_file(output, mimetype='text/csv', as_attachment=True, download_name='predictions.csv')
+    try:
+        file_path = '/tmp/uploaded_data.csv'
+        if not os.path.exists(file_path):
+            return render_template('data_preview.html', error="No data to download.")
+        
+        df = load_file(open(file_path, 'rb'))
+        model = joblib.load('/tmp/model.pkl')
+        vectorizer = joblib.load('/tmp/vectorizer.pkl')
+        text_column, _ = detect_columns(df)
+        df['cleaned_text'] = df[text_column].apply(clean_text)
+        df['predicted_sentiment'] = model.predict(vectorizer.transform(df['cleaned_text']))
+        
+        output = io.BytesIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(output, mimetype='text/csv', as_attachment=True, download_name='predictions.csv')
+    except Exception as e:
+        logging.error(f"Error in /download route: {e}\n{traceback.format_exc()}")
+        return render_template('data_preview.html', error=f"Download failed: {str(e)}")
 
 if __name__ == '__main__':
     app.run(debug=True)
