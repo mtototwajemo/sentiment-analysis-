@@ -56,6 +56,17 @@ def clean_text(text):
     tokens = [stemmer.stem(word) for word in tokens if word not in stop_words]
     return ' '.join(tokens)
 
+def clean_text_vectorized(text_series):
+    # Vectorized version of clean_text for better performance
+    text_series = text_series.fillna('')  # Handle NaN
+    text_series = text_series.str.lower()
+    text_series = text_series.str.replace(r'http\S+|www\S+|https\S+', '', regex=True)
+    text_series = text_series.str.replace(r'[^\w\s]', '', regex=True)
+    text_series = text_series.str.replace(r'\d+', '', regex=True)
+    text_series = text_series.str.replace(r'[^\x00-\x7F]+', '', regex=True)
+    # Tokenization and stemming still need apply due to NLTK
+    return text_series.apply(lambda x: ' '.join([stemmer.stem(word) for word in word_tokenize(x) if word not in stop_words]))
+
 def detect_encoding(file):
     raw_data = file.read()
     result = chardet.detect(raw_data)
@@ -102,11 +113,11 @@ def plot_to_base64(fig):
 def generate_eda_plots(df, text_column, sentiment_column):
     plots = {}
     try:
-        # Sample data to reduce memory usage on Render
+        # Sample data to reduce memory usage
         df_sample = df.sample(n=min(1000, len(df)), random_state=42) if len(df) > 1000 else df
         
         if sentiment_column in df_sample.columns:
-            fig, ax = plt.subplots(figsize=(6, 4))  # Smaller figure size
+            fig, ax = plt.subplots(figsize=(6, 4))
             sns.countplot(x=sentiment_column, hue=sentiment_column, data=df_sample, palette=['#ff6b6b', '#4ecdc4', '#45b7d1'], legend=False)
             ax.set_title("Sentiment Distribution")
             plots['sentiment_dist'] = plot_to_base64(fig)
@@ -114,7 +125,7 @@ def generate_eda_plots(df, text_column, sentiment_column):
             for sentiment in df_sample[sentiment_column].unique():
                 text = ' '.join(df_sample[df_sample[sentiment_column] == sentiment][text_column].dropna())
                 if text:
-                    wc = WordCloud(width=300, height=150, background_color='white').generate(text)  # Smaller word cloud
+                    wc = WordCloud(width=300, height=150, background_color='white').generate(text)
                     fig, ax = plt.subplots(figsize=(6, 3))
                     ax.imshow(wc, interpolation='bilinear')
                     ax.axis('off')
@@ -123,7 +134,7 @@ def generate_eda_plots(df, text_column, sentiment_column):
 
         df_sample['text_length'] = df_sample[text_column].astype(str).apply(len)
         fig, ax = plt.subplots(figsize=(6, 4))
-        sns.histplot(df_sample['text_length'], bins=20, kde=True, color='#4ecdc4')  # Fewer bins
+        sns.histplot(df_sample['text_length'], bins=20, kde=True, color='#4ecdc4')
         ax.set_title("Text Length Distribution")
         plots['text_length'] = plot_to_base64(fig)
     except Exception as e:
@@ -132,8 +143,12 @@ def generate_eda_plots(df, text_column, sentiment_column):
 
 def train_model(df, text_column, sentiment_column, model_type, split_ratio):
     try:
+        # Sample data for training to fit Render's memory limit
         df = df.dropna(subset=[text_column, sentiment_column])
-        X = df[text_column].apply(clean_text)
+        if len(df) > 1000:  # Limit to 1000 rows
+            df = df.sample(n=1000, random_state=42)
+        
+        X = clean_text_vectorized(df[text_column])  # Use vectorized cleaning
         y = df[sentiment_column]
         vectorizer = TfidfVectorizer(max_features=5000)
         X = vectorizer.fit_transform(X)
@@ -212,12 +227,14 @@ def train():
         model, vectorizer, metrics, counts_before, counts_after = train_model(df, text_column, sentiment_column, model_type, split_ratio)
         eda_plots = generate_eda_plots(df, text_column, sentiment_column)
         
-        df['cleaned_text'] = df[text_column].apply(clean_text)
-        X = vectorizer.transform(df['cleaned_text'])
-        df['predicted_sentiment'] = model.predict(X)
+        # Limit cleaned text generation to sampled data
+        df_sample = df.sample(n=min(1000, len(df)), random_state=42) if len(df) > 1000 else df
+        df_sample['cleaned_text'] = clean_text_vectorized(df_sample[text_column])
+        X = vectorizer.transform(df_sample['cleaned_text'])
+        df_sample['predicted_sentiment'] = model.predict(X)
         
         columns = df.columns.tolist()
-        top_5 = df[[text_column, 'predicted_sentiment']].head()
+        top_5 = df_sample[[text_column, 'predicted_sentiment']].head()
         return render_template('data_preview.html', data=df.head().to_html(classes='table table-striped table-hover'),
                                text_column=text_column, sentiment_column=sentiment_column, metrics=metrics,
                                eda_plots=eda_plots, top_5=top_5,
@@ -275,11 +292,12 @@ def download():
         model = joblib.load('/tmp/model.pkl')
         vectorizer = joblib.load('/tmp/vectorizer.pkl')
         text_column, _ = detect_columns(df)
-        df['cleaned_text'] = df[text_column].apply(clean_text)
-        df['predicted_sentiment'] = model.predict(vectorizer.transform(df['cleaned_text']))
+        df_sample = df.sample(n=min(1000, len(df)), random_state=42) if len(df) > 1000 else df
+        df_sample['cleaned_text'] = clean_text_vectorized(df_sample[text_column])
+        df_sample['predicted_sentiment'] = model.predict(vectorizer.transform(df_sample['cleaned_text']))
         
         output = io.BytesIO()
-        df.to_csv(output, index=False)
+        df_sample.to_csv(output, index=False)
         output.seek(0)
         return send_file(output, mimetype='text/csv', as_attachment=True, download_name='predictions.csv')
     except Exception as e:
