@@ -9,4 +9,4 @@ wordcloud==1.9.3
 joblib==1.4.0
 chardet==5.2.0
 gunicorn==22.0.0
-lime==0.2.0.1
+xgboost==2.0.3

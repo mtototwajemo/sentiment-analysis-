@@ -142,3 +142,10 @@
 2025-04-06 12:52:21,318 - INFO - 127.0.0.1 - - [06/Apr/2025 12:52:21] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
 2025-04-06 12:53:45,299 - INFO - 127.0.0.1 - - [06/Apr/2025 12:53:45] "POST /predict HTTP/1.1" 200 -
 2025-04-06 12:53:45,716 - INFO - 127.0.0.1 - - [06/Apr/2025 12:53:45] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2025-04-06 13:06:49,365 - INFO - 127.0.0.1 - - [06/Apr/2025 13:06:49] "POST /predict HTTP/1.1" 200 -
+2025-04-06 13:06:51,394 - INFO - 127.0.0.1 - - [06/Apr/2025 13:06:51] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2025-04-06 13:08:03,740 - INFO - 127.0.0.1 - - [06/Apr/2025 13:08:03] "POST /predict HTTP/1.1" 200 -
+2025-04-06 13:08:04,090 - INFO - 127.0.0.1 - - [06/Apr/2025 13:08:04] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2025-04-06 13:08:44,584 - INFO - 127.0.0.1 - - [06/Apr/2025 13:08:44] "POST /train HTTP/1.1" 200 -
+2025-04-06 13:08:44,944 - INFO - 127.0.0.1 - - [06/Apr/2025 13:08:44] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2025-04-06 13:23:18,754 - INFO -  * Detected change in 'C:\\Users\\mtoto\\Downloads\\sentiment_analysis_app\\apps.py', reloading
