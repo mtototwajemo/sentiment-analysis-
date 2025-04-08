@@ -137,12 +137,20 @@ def train_model(df, text_col, sentiment_col, split_ratio=0.8):
         reverse_label_map = {new: old for old, new in label_map.items()}
         y_mapped = y.map(label_map)
         
-        tfidf = TfidfVectorizer(max_features=3000, ngram_range=(1, 2))
+        # Improved TF-IDF and XGBoost for better accuracy
+        tfidf = TfidfVectorizer(max_features=5000, ngram_range=(1, 3), min_df=2)  # Increased features, added trigrams
         X_tfidf = tfidf.fit_transform(X)
         
         X_train, X_test, y_train, y_test = train_test_split(X_tfidf, y_mapped, train_size=split_ratio, random_state=42)
         
-        model = XGBClassifier(n_estimators=100, max_depth=3, learning_rate=0.05, eval_metric='mlogloss')
+        model = XGBClassifier(
+            n_estimators=200,         # More trees for better learning
+            max_depth=4,              # Slightly deeper trees
+            learning_rate=0.03,       # Slower learning for precision
+            reg_alpha=0.1,            # L1 regularization to prevent overfitting
+            reg_lambda=1.0,           # L2 regularization
+            eval_metric='mlogloss'
+        )
         model.fit(X_train, y_train)
         
         y_pred = model.predict(X_test)
