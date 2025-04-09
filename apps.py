@@ -11,16 +11,10 @@ from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, classification_report
 import io
-import base64
 import joblib
 import logging
 import chardet
 import os
-import matplotlib
-matplotlib.use('Agg')  # Use non-GUI backend to avoid threading issues
-import matplotlib.pyplot as plt
-import seaborn as sns
-from wordcloud import WordCloud
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -38,6 +32,17 @@ stemmer = PorterStemmer()
 # Sentiment mapping
 SENTIMENT_MAP = {0: 'Negative', 1: 'Neutral', 2: 'Positive'}
 REVERSE_MAP = {v: k for k, v in SENTIMENT_MAP.items()}
+
+# Built-in mini dataset for default model
+DEFAULT_DATA = pd.DataFrame({
+    'text': [
+        'this is great', 'awesome work', 'i love it', 'very good', 'happy day',
+        'not good', 'this is bad', 'terrible day', 'i hate it', 'awful experience',
+        'not bad', 'pretty decent', 'okay stuff', 'neutral vibe', 'fine today',
+        'good effort', 'sad moment', 'strong win', 'weak loss', 'never awesome'
+    ],
+    'sentiment': [2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 2, 1, 1, 1, 1, 2, 0, 2, 0, 0]
+})
 
 # Utility Functions
 def clean_text(text):
@@ -93,38 +98,55 @@ def get_sentiment_counts(df, sentiment_col):
     sentiment_series = map_sentiments(df[sentiment_col]).map(SENTIMENT_MAP)
     return sentiment_series.value_counts().to_dict()
 
-def generate_plots(df, text_col, sentiment_col):
-    plots = {}
-    sample = df.sample(min(500, len(df)), random_state=42)
+def simple_sentiment(text):
+    """Improved rule-based sentiment analysis with negation handling"""
+    positive_words = {'good', 'great', 'awesome', 'happy', 'win', 'strong', 'love', 'decent'}
+    negative_words = {'bad', 'terrible', 'awful', 'lose', 'weak', 'sad', 'hate'}
+    negation_words = {'not', 'never', 'no', 'aint', 'isnt', 'arent', 'dont'}
     
-    if sentiment_col:
-        fig, ax = plt.subplots(figsize=(5, 3))
-        sample[sentiment_col] = map_sentiments(sample[sentiment_col]).map(SENTIMENT_MAP)
-        sns.countplot(x=sentiment_col, hue=sentiment_col, data=sample, palette=['#e74c3c', '#95a5a6', '#2ecc71'], legend=False)
-        ax.set_title("Sentiment Distribution")
-        plots['sentiment'] = plot_to_base64(fig)
+    tokens = clean_text(text).split()
+    pos_score = 0
+    neg_score = 0
     
-    if text_col and sentiment_col:
-        sample[sentiment_col] = map_sentiments(sample[sentiment_col]).map(SENTIMENT_MAP)
-        for sentiment, colormap in [('Positive', 'Greens'), ('Negative', 'Reds'), ('Neutral', 'Greys')]:
-            text = ' '.join(sample[sample[sentiment_col] == sentiment][text_col].dropna())
-            if text:
-                wc = WordCloud(width=300, height=150, background_color='white', max_words=30, colormap=colormap).generate(text)
-                fig, ax = plt.subplots(figsize=(5, 2))
-                ax.imshow(wc)
-                ax.axis('off')
-                ax.set_title(f"{sentiment} Words")
-                plots[f'wordcloud_{sentiment.lower()}'] = plot_to_base64(fig)
+    for i, token in enumerate(tokens):
+        # Check for negation in the previous token
+        negated = i > 0 and tokens[i-1] in negation_words
+        
+        if token in positive_words:
+            if negated:
+                neg_score += 1  # "not good" → negative
+            else:
+                pos_score += 1
+        elif token in negative_words:
+            if negated:
+                pos_score += 1  # "not bad" → positive
+            else:
+                neg_score += 1
     
-    return plots
+    # More decisive scoring
+    if pos_score > neg_score + 0.5:  # Slight bias to break ties
+        return 2, {'Positive': 0.80, 'Neutral': 0.15, 'Negative': 0.05}
+    elif neg_score > pos_score + 0.5:
+        return 0, {'Positive': 0.05, 'Neutral': 0.15, 'Negative': 0.80}
+    return 1, {'Positive': 0.35, 'Neutral': 0.40, 'Negative': 0.25}
 
-def plot_to_base64(fig):
-    buf = io.BytesIO()
-    fig.savefig(buf, format='png', bbox_inches='tight', dpi=80)
-    buf.seek(0)
-    img_str = base64.b64encode(buf.getvalue()).decode('utf-8')
-    plt.close(fig)
-    return img_str
+def train_default_model():
+    """Train a default model with built-in data if no user model exists"""
+    if not all(os.path.exists(f) for f in ['model.pkl', 'tfidf.pkl', 'label_map.pkl']):
+        X = clean_text_series(DEFAULT_DATA['text'])
+        y = DEFAULT_DATA['sentiment']
+        
+        tfidf = TfidfVectorizer(max_features=500, ngram_range=(1, 2))
+        X_tfidf = tfidf.fit_transform(X)
+        
+        model = XGBClassifier(n_estimators=50, max_depth=2, learning_rate=0.1, eval_metric='mlogloss')
+        model.fit(X_tfidf, y)
+        
+        label_map = {i: i for i in range(3)}  # Identity map for simplicity
+        joblib.dump(model, 'model.pkl')
+        joblib.dump(tfidf, 'tfidf.pkl')
+        joblib.dump(label_map, 'label_map.pkl')
+        logging.info("Default model trained and saved.")
 
 def train_model(df, text_col, sentiment_col, split_ratio=0.8):
     try:
@@ -135,19 +157,18 @@ def train_model(df, text_col, sentiment_col, split_ratio=0.8):
         X = clean_text_series(df[text_col])
         y = map_sentiments(df[sentiment_col])
         
-        # Reindex y to consecutive integers starting from 0
         unique_labels = np.unique(y)
         label_map = {old: new for new, old in enumerate(sorted(unique_labels))}
         reverse_label_map = {new: old for old, new in label_map.items()}
         y_mapped = y.map(label_map)
         
-        tfidf = TfidfVectorizer(max_features=5000, ngram_range=(1, 3), min_df=2)
+        tfidf = TfidfVectorizer(max_features=2000, ngram_range=(1, 2), min_df=2)
         X_tfidf = tfidf.fit_transform(X)
         
         X_train, X_test, y_train, y_test = train_test_split(X_tfidf, y_mapped, train_size=split_ratio, random_state=42)
         
         model = XGBClassifier(
-            n_estimators=200, max_depth=4, learning_rate=0.03,
+            n_estimators=100, max_depth=3, learning_rate=0.03,
             reg_alpha=0.1, reg_lambda=1.0, eval_metric='mlogloss'
         )
         model.fit(X_train, y_train)
@@ -162,7 +183,6 @@ def train_model(df, text_col, sentiment_col, split_ratio=0.8):
         joblib.dump(tfidf, 'tfidf.pkl')
         joblib.dump(label_map, 'label_map.pkl')
         
-        # Get counts after training (predicted)
         df_test = df.iloc[X_test.indices]
         df_test['predicted_sentiment'] = y_pred_orig.map(SENTIMENT_MAP)
         after_counts = df_test['predicted_sentiment'].value_counts().to_dict()
@@ -179,6 +199,7 @@ def train_model(df, text_col, sentiment_col, split_ratio=0.8):
 # Routes
 @app.route('/')
 def index():
+    train_default_model()  # Ensure default model is ready
     return render_template('index.html')
 
 @app.route('/upload', methods=['POST'])
@@ -190,18 +211,24 @@ def upload():
     if df is None or df.empty:
         return render_template('index.html', error="Invalid or empty file.")
     
+    for file in ['uploaded_data.csv', 'model.pkl', 'tfidf.pkl', 'label_map.pkl']:
+        if os.path.exists(file):
+            os.remove(file)
+    
     df.to_csv('uploaded_data.csv', index=False)
     columns = df.columns.tolist()
-    
-    summary = {
-        'rows': len(df),
-        'columns': columns,
-        'types': {col: str(df[col].dtype) for col in columns}
-    }
+    text_col = columns[0]
+    sentiment_col = columns[1] if len(columns) > 1 else columns[0]
+    cleaned_df = df[[text_col]].copy()
+    cleaned_df['cleaned_text'] = clean_text_series(df[text_col])
+    before_counts = get_sentiment_counts(df, sentiment_col)
     
     return render_template('preview.html', 
                           data=df.head().to_html(classes='data-table'),
-                          summary=summary, columns=columns)
+                          cleaned_data=cleaned_df.head().to_html(classes='data-table'),
+                          summary={'rows': len(df), 'columns': columns, 'types': {col: str(df[col].dtype) for col in columns}},
+                          columns=columns, text_col=text_col, sentiment_col=sentiment_col,
+                          before_counts=before_counts)
 
 @app.route('/train', methods=['POST'])
 def train():
@@ -220,14 +247,13 @@ def train():
     cleaned_df['cleaned_text'] = clean_text_series(df[text_col])
     before_counts = get_sentiment_counts(df, sentiment_col)
     metrics = train_model(df, text_col, sentiment_col, split_ratio)
-    plots = generate_plots(df, text_col, sentiment_col)
     columns = df.columns.tolist()
     
     return render_template('preview.html', 
                           data=df.head().to_html(classes='data-table'),
                           cleaned_data=cleaned_df.head().to_html(classes='data-table'),
                           summary={'rows': len(df), 'columns': columns, 'types': {col: str(df[col].dtype) for col in columns}},
-                          metrics=metrics, plots=plots,
+                          metrics=metrics,
                           text_col=text_col, sentiment_col=sentiment_col,
                           columns=columns, before_counts=before_counts)
 
@@ -235,11 +261,9 @@ def train():
 def predict():
     text = request.form.get('text', '').strip()
     if not text:
-        return render_template('preview.html', error="Please enter text to predict.")
+        return render_template('index.html', error="Please enter text to predict.")
     
-    if not os.path.exists('model.pkl') or not os.path.exists('tfidf.pkl') or not os.path.exists('label_map.pkl'):
-        return render_template('preview.html', error="Train a model first!")
-    
+    train_default_model()  # Ensure a model is available
     model = joblib.load('model.pkl')
     tfidf = joblib.load('tfidf.pkl')
     label_map = joblib.load('label_map.pkl')
@@ -248,30 +272,27 @@ def predict():
     cleaned = clean_text(text)
     X = tfidf.transform([cleaned])
     pred = model.predict(X)[0]
-    probs = model.predict_proba(X)[0]
-    
-    pred_orig = reverse_label_map[pred]
-    probs_orig = {reverse_label_map[i]: prob for i, prob in enumerate(probs) if i in reverse_label_map}
+    probs_array = model.predict_proba(X)[0]
+    probs = {SENTIMENT_MAP[reverse_label_map[i]]: prob for i, prob in enumerate(probs_array)}
     
     result = {
-        'prediction': SENTIMENT_MAP[pred_orig],
-        'probabilities': {SENTIMENT_MAP[k]: f"{v:.2%}" for k, v in probs_orig.items()}
+        'prediction': SENTIMENT_MAP[reverse_label_map[pred]],
+        'probabilities': {k: f"{v:.2%}" for k, v in probs.items()}
     }
     
     df = pd.read_csv('uploaded_data.csv') if os.path.exists('uploaded_data.csv') else pd.DataFrame()
-    columns = df.columns.tolist()
+    columns = df.columns.tolist() if not df.empty else []
     text_col = request.form.get('text_col', columns[0] if columns else "text")
     sentiment_col = request.form.get('sentiment_col', columns[1] if len(columns) > 1 else "sentiment")
-    cleaned_df = df[[text_col]].copy()
-    cleaned_df['cleaned_text'] = clean_text_series(df[text_col])
+    cleaned_df = df[[text_col]].copy() if not df.empty else pd.DataFrame({'text': [text]})
+    cleaned_df['cleaned_text'] = clean_text_series(cleaned_df[text_col if not df.empty else 'text'])
     before_counts = get_sentiment_counts(df, sentiment_col) if not df.empty else {}
-    plots = generate_plots(df, text_col, sentiment_col) if not df.empty else {}
     
     return render_template('preview.html', 
                           data=df.head().to_html(classes='data-table') if not df.empty else None,
-                          cleaned_data=cleaned_df.head().to_html(classes='data-table') if not df.empty else None,
+                          cleaned_data=cleaned_df.head().to_html(classes='data-table'),
                           summary={'rows': len(df), 'columns': columns, 'types': {col: str(df[col].dtype) for col in columns}} if not df.empty else None,
-                          result=result, input_text=text, plots=plots,
+                          result=result, input_text=text,
                           text_col=text_col, sentiment_col=sentiment_col,
                           columns=columns, before_counts=before_counts)
 
