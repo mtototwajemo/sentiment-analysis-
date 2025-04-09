@@ -1,38 +1,40 @@
 /* General Styles */
 body {
     font-family: 'Arial', sans-serif;
-    background: url('https://www.toptal.com/designers/subtlepatterns/uploads/vintage-concrete.png');
+    background: linear-gradient(135deg, #1a2a44, #2e4a62, #3f6b88);
     margin: 0;
     padding: 20px;
-    color: #333;
+    color: #fff;
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(40, 44, 52, 0.9);
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
 }
 
 h1, h2 {
-    color: #2c3e50;
+    color: #f39c12;
     text-align: center;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .error {
     color: #e74c3c;
     text-align: center;
+    font-weight: bold;
 }
 
 /* Box Styling */
 .box {
-    background: #ecf0f1;
+    background: linear-gradient(45deg, #34495e, #4b6584);
     padding: 15px;
-    margin: 10px 0;
+    margin: 15px 0;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #7f8c8d;
 }
 
 /* Table Styling */
@@ -40,16 +42,18 @@ h1, h2 {
     width: 100%;
     border-collapse: collapse;
     margin: 10px 0;
+    background: rgba(255, 255, 255, 0.95);
 }
 
 .data-table th, .data-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
+    border: 1px solid #d35400;
+    padding: 10px;
     text-align: left;
+    color: #2c3e50;
 }
 
 .data-table th {
-    background: #3498db;
+    background: #e67e22;
     color: white;
 }
 
@@ -57,62 +61,66 @@ h1, h2 {
 form {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
 label {
     font-weight: bold;
+    color: #bdc3c7;
 }
 
-input, textarea {
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+input, textarea, select {
+    padding: 10px;
+    border: 2px solid #16a085;
+    border-radius: 6px;
+    background: #ecf0f1;
+    color: #2c3e50;
     width: 100%;
-    max-width: 300px;
+    max-width: 400px;
 }
 
 button {
-    background: #3498db;
+    background: #d35400;
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
+    padding: 12px 20px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: background 0.3s, transform 0.2s;
 }
 
 button:hover {
-    background: #2980b9;
+    background: #e67e22;
+    transform: scale(1.03);
 }
 
-/* Image Styling */
-img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 5px;
+/* Sentiment Colors */
+.sentiment-positive {
+    color: #27ae60;
+    font-weight: bold;
 }
 
-/* Index Page Specific */
+.sentiment-negative {
+    color: #c0392b;
+    font-weight: bold;
+}
+
+.sentiment-neutral {
+    color: #f1c40f;
+    font-weight: bold;
+}
+
+.positive { color: #27ae60; }
+.negative { color: #c0392b; }
+.neutral { color: #f1c40f; }
+
+/* Upload Form Specific */
 .upload-form {
     align-items: center;
 }
 
 .upload-form input[type="file"] {
-    padding: 10px;
-}
-
-/* Sentiment Colors */
-.sentiment-positive {
-    color: #2ecc71;
-}
-
-.sentiment-negative {
-    color: #e74c3c;
-}
-
-.sentiment-neutral {
-    color: #95a5a6;
+    padding: 8px;
 }
 
 /* Responsive Design */
@@ -126,7 +134,7 @@ img {
     .box {
         padding: 10px;
     }
-    input, textarea {
+    input, textarea, select {
         max-width: 100%;
     }
 }

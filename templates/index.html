@@ -3,19 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentiment Analysis - Upload</title>
+    <title>Sentiment Analysis Tool</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>Upload Your Sentiment Data</h1>
+        <h1>Sentiment Analysis Tool</h1>
         {% if error %}
             <p class="error">{{ error }}</p>
         {% endif %}
-        <form method="post" enctype="multipart/form-data" action="/upload" class="upload-form">
-            <input type="file" name="file" accept=".csv,.xlsx,.txt,.json" required>
-            <button type="submit">Upload</button>
-        </form>
+
+        <div class="box">
+            <h2>Predict Sentiment</h2>
+            <form method="post" action="/predict">
+                <textarea name="text" rows="4" placeholder="Type your text here (e.g., 'This is a strong win!')"></textarea>
+                <button type="submit">Predict</button>
+            </form>
+        </div>
+
+        <div class="box">
+            <h2>Upload Data (Optional)</h2>
+            <form method="post" enctype="multipart/form-data" action="/upload" class="upload-form">
+                <input type="file" name="file" accept=".csv,.xlsx,.txt,.json">
+                <button type="submit">Upload</button>
+            </form>
+        </div>
     </div>
 </body>
 </html>
