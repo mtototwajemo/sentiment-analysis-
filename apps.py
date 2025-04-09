@@ -16,24 +16,19 @@ import logging
 import chardet
 import os
 
-# Initialize Flask app
 app = Flask(__name__)
 
-# Setup logging
 logging.basicConfig(level=logging.INFO, filename='sentiment_app.log', filemode='a',
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
-# NLTK setup
 nltk.download('stopwords', quiet=True)
 nltk.download('punkt', quiet=True)
 stop_words = set(stopwords.words('english'))
 stemmer = PorterStemmer()
 
-# Sentiment mapping
 SENTIMENT_MAP = {0: 'Negative', 1: 'Neutral', 2: 'Positive'}
 REVERSE_MAP = {v: k for k, v in SENTIMENT_MAP.items()}
 
-# Built-in mini dataset for default model
 DEFAULT_DATA = pd.DataFrame({
     'text': [
         'this is great', 'awesome work', 'i love it', 'very good', 'happy day',
@@ -44,7 +39,6 @@ DEFAULT_DATA = pd.DataFrame({
     'sentiment': [2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 2, 1, 1, 1, 1, 2, 0, 2, 0, 0]
 })
 
-# Utility Functions
 def clean_text(text):
     if not isinstance(text, str):
         return ""
@@ -95,11 +89,15 @@ def map_sentiments(series):
     return series.apply(convert)
 
 def get_sentiment_counts(df, sentiment_col):
-    sentiment_series = map_sentiments(df[sentiment_col]).map(SENTIMENT_MAP)
-    return sentiment_series.value_counts().to_dict()
+    try:
+        sentiment_series = map_sentiments(df[sentiment_col])
+        counts = sentiment_series.value_counts().reindex([0, 1, 2], fill_value=0)
+        return {SENTIMENT_MAP[k]: v for k, v in counts.items()}
+    except Exception as e:
+        logging.error(f"Error in get_sentiment_counts: {e}")
+        return {'Positive': 0, 'Neutral': 0, 'Negative': 0}
 
 def simple_sentiment(text):
-    """Improved rule-based sentiment analysis with negation handling"""
     positive_words = {'good', 'great', 'awesome', 'happy', 'win', 'strong', 'love', 'decent'}
     negative_words = {'bad', 'terrible', 'awful', 'lose', 'weak', 'sad', 'hate'}
     negation_words = {'not', 'never', 'no', 'aint', 'isnt', 'arent', 'dont'}
@@ -109,40 +107,32 @@ def simple_sentiment(text):
     neg_score = 0
     
     for i, token in enumerate(tokens):
-        # Check for negation in the previous token
         negated = i > 0 and tokens[i-1] in negation_words
-        
         if token in positive_words:
-            if negated:
-                neg_score += 1  # "not good" → negative
-            else:
-                pos_score += 1
+            pos_score += 1 if not negated else -1
+            neg_score += -1 if negated else 0
         elif token in negative_words:
-            if negated:
-                pos_score += 1  # "not bad" → positive
-            else:
-                neg_score += 1
+            neg_score += 1 if not negated else -1
+            pos_score += -1 if negated else 0
     
-    # More decisive scoring
-    if pos_score > neg_score + 0.5:  # Slight bias to break ties
+    if pos_score > neg_score + 0.5:
         return 2, {'Positive': 0.80, 'Neutral': 0.15, 'Negative': 0.05}
     elif neg_score > pos_score + 0.5:
         return 0, {'Positive': 0.05, 'Neutral': 0.15, 'Negative': 0.80}
     return 1, {'Positive': 0.35, 'Neutral': 0.40, 'Negative': 0.25}
 
 def train_default_model():
-    """Train a default model with built-in data if no user model exists"""
     if not all(os.path.exists(f) for f in ['model.pkl', 'tfidf.pkl', 'label_map.pkl']):
         X = clean_text_series(DEFAULT_DATA['text'])
         y = DEFAULT_DATA['sentiment']
         
-        tfidf = TfidfVectorizer(max_features=500, ngram_range=(1, 2))
+        tfidf = TfidfVectorizer(max_features=100)  # Reduced for speed
         X_tfidf = tfidf.fit_transform(X)
         
-        model = XGBClassifier(n_estimators=50, max_depth=2, learning_rate=0.1, eval_metric='mlogloss')
+        model = XGBClassifier(n_estimators=20, max_depth=2, learning_rate=0.1, eval_metric='mlogloss')
         model.fit(X_tfidf, y)
         
-        label_map = {i: i for i in range(3)}  # Identity map for simplicity
+        label_map = {i: i for i in range(3)}
         joblib.dump(model, 'model.pkl')
         joblib.dump(tfidf, 'tfidf.pkl')
         joblib.dump(label_map, 'label_map.pkl')
@@ -162,16 +152,21 @@ def train_model(df, text_col, sentiment_col, split_ratio=0.8):
         reverse_label_map = {new: old for old, new in label_map.items()}
         y_mapped = y.map(label_map)
         
-        tfidf = TfidfVectorizer(max_features=2000, ngram_range=(1, 2), min_df=2)
+        tfidf = TfidfVectorizer(max_features=500)  # Reduced for speed
         X_tfidf = tfidf.fit_transform(X)
         
         X_train, X_test, y_train, y_test = train_test_split(X_tfidf, y_mapped, train_size=split_ratio, random_state=42)
         
         model = XGBClassifier(
-            n_estimators=100, max_depth=3, learning_rate=0.03,
-            reg_alpha=0.1, reg_lambda=1.0, eval_metric='mlogloss'
+            n_estimators=50,  # Reduced
+            max_depth=2,      # Reduced
+            learning_rate=0.05,
+            reg_alpha=0.1,
+            reg_lambda=1.0,
+            eval_metric='mlogloss',
+            early_stopping_rounds=10  # Added early stopping
         )
-        model.fit(X_train, y_train)
+        model.fit(X_train, y_train, eval_set=[(X_test, y_test)], verbose=False)
         
         y_pred = model.predict(X_test)
         accuracy = accuracy_score(y_test, y_pred)
@@ -196,10 +191,9 @@ def train_model(df, text_col, sentiment_col, split_ratio=0.8):
         logging.error(f"Training failed: {e}")
         raise
 
-# Routes
 @app.route('/')
 def index():
-    train_default_model()  # Ensure default model is ready
+    train_default_model()
     return render_template('index.html')
 
 @app.route('/upload', methods=['POST'])
@@ -263,7 +257,7 @@ def predict():
     if not text:
         return render_template('index.html', error="Please enter text to predict.")
     
-    train_default_model()  # Ensure a model is available
+    train_default_model()
     model = joblib.load('model.pkl')
     tfidf = joblib.load('tfidf.pkl')
     label_map = joblib.load('label_map.pkl')
